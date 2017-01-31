@@ -14,9 +14,8 @@ public class EnemySpawner : MonoBehaviour {
     private float m_enemyInitXCoord;
 
     private float m_formationHalfWidth;
-    private float m_formationHalfHeight;
-    private float m_playAreaMinX;
-    private float m_playAreaMaxX;
+    private Vector2 m_playAreaMin;
+    private Vector2 m_playAreaMax;
 
     enum FormationState
     {
@@ -32,25 +31,25 @@ public class EnemySpawner : MonoBehaviour {
         float leftEnemyToCenter = (EnemiesPerRow - 1) * (m_enemyPrefabSpriteRenderer.bounds.size.x + EnemyPadding) / 2.0f;
 
         m_formationHalfWidth = leftEnemyToCenter + m_enemyPrefabSpriteRenderer.bounds.extents.x;
-        m_formationHalfHeight = m_enemyPrefabSpriteRenderer.bounds.extents.y;
 
-        m_playAreaMinX = Camera.main.ViewportToWorldPoint(new Vector3(0.0f, 0.0f, 0.0f)).x;
-        m_playAreaMaxX = Camera.main.ViewportToWorldPoint(new Vector3(1.0f, 0.0f, 0.0f)).x;
+        m_playAreaMin = Camera.main.ViewportToWorldPoint(new Vector3(0.0f, 0.0f, 0.0f));
+        m_playAreaMax = Camera.main.ViewportToWorldPoint(new Vector3(1.0f, 1.0f, 0.0f));
 
         m_enemyInitXCoord = -leftEnemyToCenter;
-        CreateRowEnemy(200.0f);
-
         m_formationState = FormationState.MoveLeft;
     }
 
-    void CreateRowEnemy(float yCoord)
+    void CreateEnemyRow(float yCoord)
     {
         float xCoord = m_enemyInitXCoord;
 
         for (int i=0; i<EnemiesPerRow; ++i)
         {
-            GameObject enemy = Instantiate(EnemyPrefab, new Vector3(xCoord, yCoord, 0.0f), Quaternion.identity);
-            enemy.transform.parent = transform;
+            GameObject position = new GameObject("Position");
+            position.transform.parent = transform;
+            position.transform.position = new Vector3(xCoord, yCoord, 0.0f);
+
+            Instantiate(EnemyPrefab, position.transform, false);
 
             xCoord += (m_enemyPrefabSpriteRenderer.bounds.extents.x * 2.0f) + EnemyPadding;
         }
@@ -66,7 +65,7 @@ public class EnemySpawner : MonoBehaviour {
                 {
                     newPos += Vector3.left * FormationXSpeed * Time.deltaTime;
 
-                    if ((newPos.x - m_formationHalfWidth) < m_playAreaMinX)
+                    if ((newPos.x - m_formationHalfWidth) < m_playAreaMin.x)
                     {
                         m_formationState = FormationState.MoveRight;
                     }
@@ -76,7 +75,7 @@ public class EnemySpawner : MonoBehaviour {
                 {
                     newPos += Vector3.right * FormationXSpeed * Time.deltaTime;
 
-                    if ((newPos.x + m_formationHalfWidth) > m_playAreaMaxX)
+                    if ((newPos.x + m_formationHalfWidth) > m_playAreaMax.x)
                     {
                         m_formationState = FormationState.MoveLeft;
                     }
@@ -85,5 +84,13 @@ public class EnemySpawner : MonoBehaviour {
         }
         newPos += Vector3.down * FormationYSpeed * Time.deltaTime;
         transform.position = newPos;
+
+        if (AllMembersDead())
+            CreateEnemyRow(m_playAreaMax.y - m_enemyPrefabSpriteRenderer.bounds.extents.y);
+    }
+
+    bool AllMembersDead()
+    {
+        return transform.childCount == 0;
     }
 }

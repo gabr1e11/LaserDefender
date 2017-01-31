@@ -1,18 +1,21 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour {
 
+    public float Health = 100.0f;
     public float Speed = 100.0f;
+    public float FiringRate = 0.05f;
     public GameObject Shot;
-
+    
     private float xmin = -5.0f;
     private float xmax = 5.0f;
 
     private SpriteRenderer m_spriteRenderer;
-    private GameObject m_currentShot;
-     
+    private Text m_lifeText;
+
     // Use this for initialization
     void Start()
     {
@@ -23,7 +26,8 @@ public class PlayerController : MonoBehaviour {
         xmax = Camera.main.ViewportToWorldPoint(new Vector3(1.0f, 0.0f, 0.0f)).x -
                m_spriteRenderer.bounds.extents.x;
 
-        m_currentShot = null;
+        m_lifeText = GameObject.Find("Life").GetComponent<Text>();
+        m_lifeText.text = Health.ToString();
     }
 
     // Update is called once per frame
@@ -37,13 +41,37 @@ public class PlayerController : MonoBehaviour {
         {
             transform.position += Vector3.right * (Speed * Time.deltaTime);
         }
-        if (Input.GetKey(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            if (m_currentShot == null)
-                m_currentShot = Instantiate(Shot, transform.position + (Vector3.up * m_spriteRenderer.bounds.extents.y), Quaternion.identity);
+            InvokeRepeating("Fire", 0.00001f, FiringRate);
+        } else if (Input.GetKeyUp(KeyCode.Space))
+        {
+            CancelInvoke("Fire");
         }
 
         float clampedX = Mathf.Clamp(transform.position.x, xmin, xmax);
         transform.position = new Vector2(clampedX, transform.position.y);
+    }
+
+    void Fire()
+    {
+        GameObject shot = Instantiate(Shot, transform.position + (Vector3.up * m_spriteRenderer.bounds.extents.y), Quaternion.identity);
+        Rigidbody2D rigidBody = shot.GetComponent<Rigidbody2D>();
+        rigidBody.velocity = new Vector2(0.0f, Speed);
+    }
+
+    void OnTriggerEnter2D(Collider2D coll)
+    {
+        Projectile projectile = coll.gameObject.GetComponent<Projectile>();
+        if (projectile != null)
+        {
+            projectile.Hit();
+            Health -= projectile.GetDamage();
+
+            m_lifeText.text = Health.ToString();
+
+            if (Health <= 0.0f)
+                Destroy(gameObject);
+        }
     }
 }
