@@ -41,6 +41,8 @@ public class EnemySpawner : MonoBehaviour {
 
     void CreateEnemyRow(float yCoord)
     {
+        transform.position = Vector3.zero;
+
         float xCoord = m_enemyInitXCoord;
 
         for (int i=0; i<EnemiesPerRow; ++i)

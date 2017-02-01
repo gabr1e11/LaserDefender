@@ -10,6 +10,17 @@ public class LevelManager : MonoBehaviour {
 		SceneManager.LoadScene (name);
 	}
 
+    public void LoadLevel(string name, float time)
+    {
+        StartCoroutine(LoadAfterTime(name, time));
+    }
+
+    IEnumerator LoadAfterTime(string name, float time)
+    {
+        yield return new WaitForSeconds(time);
+        LoadLevel(name);
+    }
+
     public void LoadNextLevel()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);

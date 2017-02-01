@@ -8,6 +8,10 @@ public class PlayerController : MonoBehaviour {
     public float Health = 100.0f;
     public float Speed = 100.0f;
     public float FiringRate = 0.05f;
+
+    public AudioClip m_deathAudioClip;
+    public AudioClip m_hitAudioClip;
+    public GameObject m_explosion;
     public GameObject Shot;
     
     private float xmin = -5.0f;
@@ -67,11 +71,21 @@ public class PlayerController : MonoBehaviour {
         {
             projectile.Hit();
             Health -= projectile.GetDamage();
+            AudioSource.PlayClipAtPoint(m_hitAudioClip, Camera.main.transform.position);
 
             m_lifeText.text = Health.ToString();
 
             if (Health <= 0.0f)
-                Destroy(gameObject);
+                Die();
         }
+    }
+
+    void Die()
+    {
+        AudioSource.PlayClipAtPoint(m_deathAudioClip, Camera.main.transform.position);
+        GameObject explosion = Instantiate(m_explosion, transform.position, Quaternion.identity);
+        LevelManager levManager = GameObject.Find("LevelManager").GetComponent<LevelManager>();
+        levManager.LoadLevel("Lose Screen", 2.0f);
+        Destroy(gameObject);
     }
 }
